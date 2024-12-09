@@ -39,3 +39,20 @@ def spectral_radius(A):
     return maxeig
 
 
+# Code for Project 4
+
+def sch_eqn(nspace, ntime, tau, method = 'ftcs', length = 200, potential = [], wparam = [10,0,0.5]):
+    '''Function to solve 1 dimensional, time dependent Schroedinger Equation. Please provide the following:
+    number of spatial grid points, number of time steps to be evolved, and the time step to be used. Optional arguments are:
+    1. method: string, either ftcs or crank, 2. length: float, size of spatial grid. Default to 200 (grid extends from -100 to +100),
+    3. potential: 1-D array giving the spatial index values at which the potential V(x) should be set to 1. Default to empty. ,
+    4. wparam: list of parameters for initial condition [sigma0, x0, k0]. Default [10, 0, 0.5].
+    
+    Additional information can be found in the code documentation; AbdulRahman_RayhanMohammed_project4.pdf'''
+
+
+
+    
+
+
+    return potential
