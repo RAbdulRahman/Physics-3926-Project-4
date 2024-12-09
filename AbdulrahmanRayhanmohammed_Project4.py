@@ -47,7 +47,7 @@ def spectral_radius(A):
 
 def prob_integral(array):
     '''This function provides the probability of finding a particle given an array corresponding to
-    its discretized wavefunction. Please provide the array your'e interested in.'''
+    its discretized wavefunction. Please provide the array you're interested in.'''
 
     point_product = array * np.conj(array) # Multiplying by complex conjugate
     probability = np.sum(point_product) # Integral = sum for discrete values
@@ -99,25 +99,35 @@ def sch_eqn(nspace, ntime, tau, method = 'ftcs', length = 200, potential = [], w
     I = make_tridiagonal(nspace,0,1,0) # identity matrix
     H = make_tridiagonal(nspace,-1,2,-1) + V # equation 9.31 in textbook with h_bar and m as 1 and 1/2
 
-    # matrices for each method
-
+    # matrices for each method, from equations 9.32 (ftcs) and 9.40 (Crank Nicolson)
     ftcs_matrix = I - tau*j*H   
     crank_matrix_1 = np.linalg.inv(I + (j*tau/2 * H))
     crank_matrix_2 = I - (j*tau/2 * H) 
 
-    for time in range(1,ntime):
+    # Checking if solution would be stable for ftcs
+    calculate = True 
+    if method.lower() == 'ftcs' and spectral_radius(ftcs_matrix) > 1:
 
-        if method.lower() == 'ftcs':
+        #print(spectral_radius(ftcs_matrix))
+        calculate = False
+        print('Warning, solution unstable since tau is too large. Integration not performed.')
+        exit
 
-            psi[:,time] = np.dot(ftcs_matrix,psi[:,time-1])
-            probabilities[time] = prob_integral(psi[:,time])
+    # Performing integration if solution expected to be stable
+    if calculate == True:
+        #print(spectral_radius(ftcs_matrix))
+        for time in range(1,ntime):
 
-        if method.lower() == 'crank':
+            if method.lower() == 'ftcs':
 
-            psi[:,time] = np.dot(crank_matrix_1 , np.dot(crank_matrix_2, psi[:, time - 1]))
-            probabilities[time] = prob_integral(psi[:,time])
+                psi[:,time] = np.dot(ftcs_matrix,psi[:,time-1])
+                probabilities[time] = prob_integral(psi[:,time])
 
+            if method.lower() == 'crank':
+
+                psi[:,time] = np.dot(crank_matrix_1 , np.dot(crank_matrix_2, psi[:, time - 1]))
+                probabilities[time] = prob_integral(psi[:,time])
     
-    return probabilities, psi, np.size(psi)
+        return psi, x_vals, t_vals, probabilities
 
-print(sch_eqn(100,500,0.5,'crank'))
+print(sch_eqn(100,500,1e-50,'ftcs'))
