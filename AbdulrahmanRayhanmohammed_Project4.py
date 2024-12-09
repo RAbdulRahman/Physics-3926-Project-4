@@ -44,15 +44,43 @@ def spectral_radius(A):
 def sch_eqn(nspace, ntime, tau, method = 'ftcs', length = 200, potential = [], wparam = [10,0,0.5]):
     '''Function to solve 1 dimensional, time dependent Schroedinger Equation. Please provide the following:
     number of spatial grid points, number of time steps to be evolved, and the time step to be used. Optional arguments are:
-    1. method: string, either ftcs or crank, 2. length: float, size of spatial grid. Default to 200 (grid extends from -100 to +100),
+    1. method: string, either ftcs or crank (Crank-Nicolson), 2. length: float, size of spatial grid. Default to 200 (grid extends from -100 to +100),
     3. potential: 1-D array giving the spatial index values at which the potential V(x) should be set to 1. Default to empty. ,
     4. wparam: list of parameters for initial condition [sigma0, x0, k0]. Default [10, 0, 0.5].
     
-    Additional information can be found in the code documentation; AbdulRahman_RayhanMohammed_project4.pdf'''
+    Unit assumptions h_bar = 1 and m = 1/2. 
+
+    Further information can be found in the code documentation; AbdulRahman_RayhanMohammed_project4.pdf'''
+
+    # Making Appropriate grid for wavefunction called psi 
+
+    x_vals = np.arange(-length/2, length/2, nspace)
+    t_vals = np.arange(0,ntime,tau)
+    psi = np.zeros((x_vals,t_vals))
+
+    V = np.zeros(x_vals) # Setting Potential
+    for index in potential:
+        V[index] = 1
+
+    probability = np.zeros(t_vals) # Setting probabiliy to zero
+
+    # Using initial conditions from wparam
+    sigma = wparam[0]
+    x0 = wparam[1]
+    t0 = wparam[2]
+    k0 = 35 
+
+    init_row = make_initialcond(sigma,k0,x_vals)
+    psi[0,:] = init_row
+
+    I = make_tridiagonal(nspace,0,1,0) # identity matrix
+    H = make_tridiagonal(nspace,-1,2,-1) + V # equation 9.31 in textbook
 
 
+    for time in range(ntime):
 
-    
+        if method.lower() == 'ftcs':
+
 
 
     return potential
