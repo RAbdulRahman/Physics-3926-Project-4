@@ -52,7 +52,7 @@ def prob_integral(array):
     point_product = array * np.conj(array) # Multiplying by complex conjugate
     probability = np.sum(point_product) # Integral = sum for discrete values
 
-    return probability
+    return np.real(probability)
 
 
 
@@ -74,8 +74,8 @@ def sch_eqn(nspace, ntime, tau, method = 'ftcs', length = 200, potential = [], w
     # Making Appropriate grid for wavefunction called psi 
 
     x_vals = np.linspace(-length/2, length/2, nspace)
-    t_vals = np.linspace(0,ntime * tau,tau)
-    psi = np.zeros((nspace,ntime))
+    t_vals = np.linspace(0, ntime * tau, ntime)
+    psi = np.zeros((nspace,ntime), dtype=np.complex128)
 
     j = 1j # defining root of -1
 
@@ -88,17 +88,14 @@ def sch_eqn(nspace, ntime, tau, method = 'ftcs', length = 200, potential = [], w
     # Using initial conditions from wparam
     sigma = wparam[0]
     x0 = wparam[1]
-    t0 = wparam[2]
-    k0 = 35 
+    k0 = wparam[2]
+    
 
     #initial row using 9.42 from textbook
-    init_row = np.e**(j*k0*x_vals) * np.e**(-(x_vals-x0)**2/(2*(sigma**2))) / (np.sqrt(sigma*np.sqrt(np.pi)))
-    print(init_row)
-    print(x_vals)
+    init_row = np.e**(j*k0*x_vals) * np.e**(-((x_vals-x0)**2)/(2*(sigma**2))) / (np.sqrt(sigma*np.sqrt(np.pi)))
 
-    probabilities[0] = prob_integral(init_row) # initial probability 
-    psi[:,0] = init_row 
-    j = 1j 
+    probabilities[0] = (prob_integral(init_row)) # initial probability 
+    psi[:,0] = init_row  
     I = make_tridiagonal(nspace,0,1,0) # identity matrix
     H = make_tridiagonal(nspace,-1,2,-1) + V # equation 9.31 in textbook with h_bar and m as 1 and 1/2
 
@@ -113,17 +110,14 @@ def sch_eqn(nspace, ntime, tau, method = 'ftcs', length = 200, potential = [], w
         if method.lower() == 'ftcs':
 
             psi[:,time] = np.dot(ftcs_matrix,psi[:,time-1])
-            probabilities
+            probabilities[time] = prob_integral(psi[:,time])
 
         if method.lower() == 'crank':
 
-            psi[:,time] = np.dot(crank_matrix_1 * crank_matrix_2 , psi[:,time-1])
+            psi[:,time] = np.dot(crank_matrix_1 , np.dot(crank_matrix_2, psi[:, time - 1]))
+            probabilities[time] = prob_integral(psi[:,time])
 
-        
+    
+    return probabilities, psi, np.size(psi)
 
-
-
-
-    return probabilities[0]
-
-sch_eqn(100,500,0.5)
+print(sch_eqn(100,500,0.5,'crank'))
