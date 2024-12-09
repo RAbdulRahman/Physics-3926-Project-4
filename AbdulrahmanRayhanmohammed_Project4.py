@@ -39,7 +39,26 @@ def spectral_radius(A):
     return maxeig
 
 
+
 # Code for Project 4
+
+
+# Function to find probability of a wavepacket
+
+def prob_integral(array):
+    '''This function provides the probability of finding a particle given an array corresponding to
+    its discretized wavefunction. Please provide the array your'e interested in.'''
+
+    point_product = array * np.conj(array) # Multiplying by complex conjugate
+    probability = np.sum(point_product) # Integral = sum for discrete values
+
+    return probability
+
+
+
+
+
+# Schrodinger Equation Function
 
 def sch_eqn(nspace, ntime, tau, method = 'ftcs', length = 200, potential = [], wparam = [10,0,0.5]):
     '''Function to solve 1 dimensional, time dependent Schroedinger Equation. Please provide the following:
@@ -54,15 +73,17 @@ def sch_eqn(nspace, ntime, tau, method = 'ftcs', length = 200, potential = [], w
 
     # Making Appropriate grid for wavefunction called psi 
 
-    x_vals = np.arange(-length/2, length/2, nspace)
-    t_vals = np.arange(0,ntime,tau)
-    psi = np.zeros((x_vals,t_vals))
+    x_vals = np.linspace(-length/2, length/2, nspace)
+    t_vals = np.linspace(0,ntime * tau,tau)
+    psi = np.zeros((nspace,ntime))
 
-    V = np.zeros(x_vals) # Setting Potential
+    j = 1j # defining root of -1
+
+    V = np.zeros(nspace) # Setting Potential
     for index in potential:
         V[index] = 1
 
-    probability = np.zeros(t_vals) # Setting probabiliy to zero
+    probabilities = np.zeros(ntime) # Setting probabiliy to zero
 
     # Using initial conditions from wparam
     sigma = wparam[0]
@@ -70,17 +91,39 @@ def sch_eqn(nspace, ntime, tau, method = 'ftcs', length = 200, potential = [], w
     t0 = wparam[2]
     k0 = 35 
 
-    init_row = make_initialcond(sigma,k0,x_vals)
-    psi[0,:] = init_row
+    #initial row using 9.42 from textbook
+    init_row = np.e**(j*k0*x_vals) * np.e**(-(x_vals-x0)**2/(2*(sigma**2))) / (np.sqrt(sigma*np.sqrt(np.pi)))
+    print(init_row)
+    print(x_vals)
 
+    probabilities[0] = prob_integral(init_row) # initial probability 
+    psi[:,0] = init_row 
+    j = 1j 
     I = make_tridiagonal(nspace,0,1,0) # identity matrix
-    H = make_tridiagonal(nspace,-1,2,-1) + V # equation 9.31 in textbook
+    H = make_tridiagonal(nspace,-1,2,-1) + V # equation 9.31 in textbook with h_bar and m as 1 and 1/2
 
+    # matrices for each method
 
-    for time in range(ntime):
+    ftcs_matrix = I - tau*j*H   
+    crank_matrix_1 = np.linalg.inv(I + (j*tau/2 * H))
+    crank_matrix_2 = I - (j*tau/2 * H) 
+
+    for time in range(1,ntime):
 
         if method.lower() == 'ftcs':
 
+            psi[:,time] = np.dot(ftcs_matrix,psi[:,time-1])
+            probabilities
+
+        if method.lower() == 'crank':
+
+            psi[:,time] = np.dot(crank_matrix_1 * crank_matrix_2 , psi[:,time-1])
+
+        
 
 
-    return potential
+
+
+    return probabilities[0]
+
+sch_eqn(100,500,0.5)
