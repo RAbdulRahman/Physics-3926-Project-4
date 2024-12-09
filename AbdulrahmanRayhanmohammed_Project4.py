@@ -23,15 +23,6 @@ def make_tridiagonal(N,b,d,a):
 
     return matrix
 
-
-def make_initialcond(sigma,k,grid):
-    '''Makes initial conditions for wavepacket. Please provide sigma, k and grid size'''
-
-    wavepacket = np.e**(-grid**2/(2*sigma**2))*np.cos(k*grid)
-
-    return wavepacket
-
-
 def spectral_radius(A):
     '''Returns maximum absolute eigenvalue for the givben matrix '''
     eigs = np.linalg.eig(A)[0]
@@ -53,8 +44,6 @@ def prob_integral(array):
     probability = np.sum(point_product) # Integral = sum for discrete values
 
     return np.real(probability)
-
-
 
 
 
@@ -93,7 +82,7 @@ def sch_eqn(nspace, ntime, tau, method = 'ftcs', length = 200, potential = [], w
 
     #initial row using 9.42 from textbook
     init_row = np.e**(j*k0*x_vals) * np.e**(-((x_vals-x0)**2)/(2*(sigma**2))) / (np.sqrt(sigma*np.sqrt(np.pi)))
-
+    init_row /= np.sqrt(prob_integral(init_row)) # Making sure initial condition is normalized
     probabilities[0] = (prob_integral(init_row)) # initial probability 
     psi[:,0] = init_row  
     I = make_tridiagonal(nspace,0,1,0) # identity matrix
@@ -130,4 +119,4 @@ def sch_eqn(nspace, ntime, tau, method = 'ftcs', length = 200, potential = [], w
     
         return psi, x_vals, t_vals, probabilities
 
-print(sch_eqn(100,500,1e-50,'ftcs'))
+print(sch_eqn(100,500,1e-5,'ftcs'))
