@@ -117,7 +117,7 @@ def sch_eqn(nspace, ntime, tau, method = 'ftcs', length = 200, potential = [], w
 
                 psi[:,time] = np.dot(crank_matrix_1 , np.dot(crank_matrix_2, psi[:, time - 1]))
                 probabilities[time] = prob_integral(psi[:,time])
-        print(H)
+        
         return psi, x_vals, t_vals, probabilities
 
 #print(sch_eqn(100,500,1e-5,'ftcs'))
@@ -167,10 +167,21 @@ def sch_plot(nspace, ntime, tau, plottype, specific_time, method = 'ftcs', lengt
         plt.plot(x_vals, real_at_t)
         plt.show()
 
+    if plottype.lower() == 'prob':
+
+        prob_dens = psi_matrix[:,timeindex] * np.conj(psi_matrix[:,timeindex])
+        plt.plot(x_vals, prob_dens)
+        
+        area2 = prob_integral(psi_matrix[:,timeindex])
+        print(f"Area under the curve: {round(area2,3)}")
+        plt.show()
 
     X, T = np.meshgrid(x_vals, t_vals)
 
     return results
 ex = range(0,1000)
-print(ex)
-sch_plot(1000,9000,1e-1,'psi',800,'crank',length=500,potential=ex)
+
+#sch_plot(100,900,1e-1,'psi',0,'crank',length=50)
+sch_plot(500,9000,1e-1,'prob',800,'crank',length=50)
+
+#increasing number of points in nspace decreases my probability somehow
