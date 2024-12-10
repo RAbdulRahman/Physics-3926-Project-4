@@ -119,4 +119,49 @@ def sch_eqn(nspace, ntime, tau, method = 'ftcs', length = 200, potential = [], w
     
         return psi, x_vals, t_vals, probabilities
 
-print(sch_eqn(100,500,1e-5,'ftcs'))
+#print(sch_eqn(100,500,1e-5,'ftcs'))
+
+# Plotting Function
+
+def sch_plot(nspace, ntime, tau, plottype, specific_time, method = 'ftcs', length = 200, potential = [], wparam = [10,0,0.5],save='no'):
+    '''Function that plots results for schrodinger equation. Please provide the following in order:
+    number of spatial grid points, number of time steps to be evolved, the time step to be used, the plot you want (string) either
+    psi( a plot of the real part of ψ(x) at a specific time t)  or prob (prob, a plot of the particle probability density ψ ψ*(x) at a specific time), and the specific
+    time for when you want the plot.
+     Optional arguments are:
+    1. method: string, either ftcs or crank (Crank-Nicolson), 2. length: float, size of spatial grid. Default to 200 (grid extends from -100 to +100),
+    3. potential: 1-D array giving the spatial index values at which the potential V(x) should be set to 1. Default to empty. ,
+    4. wparam: list of parameters for initial condition [sigma0, x0, k0]. Default [10, 0, 0.5].
+    4. save: string either yes or no if you want the plot to be saved. Default is no.
+    
+    Unit assumptions h_bar = 1 and m = 1/2. 
+
+    Further information can be found in the code documentation; AbdulRahman_RayhanMohammed_project4.pdf'''
+    
+    # Using sch_eqn to find values for plotting
+    results = sch_eqn(nspace,ntime,tau,method,length,potential,wparam)
+    psi_matrix = results[0]
+    x_vals = results[1]
+    t_vals = results[2]
+    probabilities = results[3]
+    time_range = ntime * tau
+
+    # Finding index of specific time in n time
+    for timepoint in range(ntime): 
+        if specific_time == timepoint * tau:
+            timeindex = timepoint
+    else:
+        print(f'Please provide a valid time that belongs to the time range, {time_range} and is a multiple of time step, {tau}')
+        exit()
+    if plottype.lower() == 'psi':
+
+        real_at_t = np.real(psi_matrix[:,timeindex])
+        plt.plot(x_vals, real_at_t)
+
+
+    X, T = np.meshgrid(x_vals, t_vals)
+
+
+    return results
+
+sch_plot(100,500,1e-2,'psi',0.01,'crank')
