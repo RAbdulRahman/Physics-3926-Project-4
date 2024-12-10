@@ -86,7 +86,8 @@ def sch_eqn(nspace, ntime, tau, method = 'ftcs', length = 200, potential = [], w
     probabilities[0] = (prob_integral(init_row)) # initial probability 
     psi[:,0] = init_row  
     I = make_tridiagonal(nspace,0,1,0) # identity matrix
-    H = make_tridiagonal(nspace,-1,2,-1) + V # equation 9.31 in textbook with h_bar and m as 1 and 1/2
+    H = make_tridiagonal(nspace,-1,2,-1)
+    np.fill_diagonal(H, np.diagonal(H) + V) # equation 9.31 in textbook with h_bar and m as 1 and 1/2
 
     # matrices for each method, from equations 9.32 (ftcs) and 9.40 (Crank Nicolson)
     ftcs_matrix = I - tau*j*H   
@@ -116,7 +117,7 @@ def sch_eqn(nspace, ntime, tau, method = 'ftcs', length = 200, potential = [], w
 
                 psi[:,time] = np.dot(crank_matrix_1 , np.dot(crank_matrix_2, psi[:, time - 1]))
                 probabilities[time] = prob_integral(psi[:,time])
-    
+        print(H)
         return psi, x_vals, t_vals, probabilities
 
 #print(sch_eqn(100,500,1e-5,'ftcs'))
@@ -147,21 +148,29 @@ def sch_plot(nspace, ntime, tau, plottype, specific_time, method = 'ftcs', lengt
     time_range = ntime * tau
 
     # Finding index of specific time in n time
-    for timepoint in range(ntime): 
-        if specific_time == timepoint * tau:
+    timeindex = None
+    tolerance = 1e-5
+
+    for timepoint in range(ntime):
+        if abs(specific_time - timepoint * tau) < tolerance:
             timeindex = timepoint
-    else:
-        print(f'Please provide a valid time that belongs to the time range, {time_range} and is a multiple of time step, {tau}')
-        exit()
+            break
+    
+    if timeindex is None:
+        print(f'Error: specific_time ({specific_time}) must be a multiple of time step tau ({tau}).')
+        print(f'Valid time steps are multiples of {tau}, and should be within the time range {time_range}.')
+        return
+    
     if plottype.lower() == 'psi':
 
         real_at_t = np.real(psi_matrix[:,timeindex])
         plt.plot(x_vals, real_at_t)
+        plt.show()
 
 
     X, T = np.meshgrid(x_vals, t_vals)
 
-
     return results
-
-sch_plot(100,500,1e-2,'psi',0.01,'crank')
+ex = range(0,1000)
+print(ex)
+sch_plot(1000,9000,1e-1,'psi',800,'crank',length=500,potential=ex)
