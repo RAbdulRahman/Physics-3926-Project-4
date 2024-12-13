@@ -4,11 +4,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy as sc
 
+######################################################
 
 # Functions and code from older labs:
 
-# Lab 10, Tridiagonal Matrix Maker, Gaussian Wavepacket Generator and Spectral Radius Calculator
-
+# Lab 10, Tridiagonal Matrix Maker, and Spectral Radius Calculator
 
 def make_tridiagonal(N,b,d,a):
 
@@ -29,7 +29,7 @@ def spectral_radius(A):
     maxeig = max(abs(eigs))
     return maxeig
 
-
+#######################################################
 
 # Code for Project 4
 
@@ -93,10 +93,12 @@ def sch_eqn(nspace, ntime, tau, method = 'ftcs', length = 200, potential = [], w
     psi[:,0] = init_row  
 
     # Creating matrices for calculation
+    h = length/(nspace-1) # spacing
     I = make_tridiagonal(nspace,0,1,0) # identity matrix
-    H = make_tridiagonal(nspace,-1,2,-1)
+    H = make_tridiagonal(nspace,-1,2,-1) / h**2
     np.fill_diagonal(H, np.diagonal(H) + V) # equation 9.31 in textbook with h_bar and m as 1 and 1/2
-
+    H[0,-1] = -1/h**2 # Periodic Condition
+    H[-1,0] = -1/h**2
     # matrices for each method, from equations 9.32 (ftcs) and 9.40 (Crank Nicolson)
     ftcs_matrix = I - tau*j*H   
     crank_matrix_1 = np.linalg.inv(I + (j*tau/2 * H))
@@ -106,14 +108,13 @@ def sch_eqn(nspace, ntime, tau, method = 'ftcs', length = 200, potential = [], w
     calculate = True 
     if method.lower() == 'ftcs' and spectral_radius(ftcs_matrix) > 1:
 
-        #print(spectral_radius(ftcs_matrix))
         calculate = False
         print('Warning, solution unstable since tau is too large. Integration not performed.')
         exit
 
     # Performing integration if solution expected to be stable
     if calculate == True:
-        #print(spectral_radius(ftcs_matrix))
+        
         for time in range(1,ntime):
 
             if method.lower() == 'ftcs':
@@ -128,7 +129,7 @@ def sch_eqn(nspace, ntime, tau, method = 'ftcs', length = 200, potential = [], w
         
         return psi, x_vals, t_vals, probabilities
 
-#print(sch_eqn(100,500,1e-5,'ftcs'))
+#print(sch_eqn(100,500,1e-90,'ftcs'))
 
 
 
@@ -151,18 +152,11 @@ def sch_plot(nspace, ntime, tau, plottype, specific_time, method = 'ftcs', lengt
 
     Further information can be found in the code documentation; AbdulRahman_RayhanMohammed_project4.pdf'''
     
-    # Using sch_eqn to find values for plotting
-    results = sch_eqn(nspace,ntime,tau,method,length,potential,wparam)
-    psi_matrix = results[0]
-    x_vals = results[1]
-    t_vals = results[2]
-    probabilities = results[3] 
-    time_range = ntime * tau
-
     # Finding index of specific time in n time
+    time_range = ntime * tau
     timeindex = None
     tolerance = tau/2 # setting tolerance to find nearest multiple of tau
-
+    # Checking if specific time is valid
     for timepoint in range(ntime):
         if abs(specific_time - timepoint * tau) < tolerance:
             timeindex = timepoint
@@ -170,8 +164,16 @@ def sch_plot(nspace, ntime, tau, plottype, specific_time, method = 'ftcs', lengt
     
     if timeindex is None:
 
-        print(f'Valid time steps are multiples of {tau}, and should be within the time range {time_range}.')
+        print(f'Valid specific time should be within the time range ie; 0 ≤ specific_time < {time_range}.')
         return
+
+    # Using sch_eqn to find values for plotting when specific time is valid
+    results = sch_eqn(nspace,ntime,tau,method,length,potential,wparam)
+    psi_matrix = results[0]
+    x_vals = results[1]
+    t_vals = results[2]
+    probabilities = results[3] 
+    
     
     if plottype.lower() == 'psi':
 
@@ -186,7 +188,7 @@ def sch_plot(nspace, ntime, tau, plottype, specific_time, method = 'ftcs', lengt
 
     if plottype.lower() == 'prob':
 
-        prob_dens = psi_matrix[:,timeindex] * np.conj(psi_matrix[:,timeindex])
+        prob_dens = np.real(psi_matrix[:,timeindex] * np.conj(psi_matrix[:,timeindex])) # using np.real since complex part is zero but present as 0j which gave warnings
         area = prob_integral(psi_matrix[:,timeindex]) # Recomputing probability just to show that it is conserved
         # Plotting Probability Density
         plt.plot(x_vals, prob_dens)
@@ -195,23 +197,16 @@ def sch_plot(nspace, ntime, tau, plottype, specific_time, method = 'ftcs', lengt
         plt.title(f'Probability Density, ψ ψ*(x) at t = {specific_time}, Area Under Curve = {np.round(area,3)}')
         plt.show()
 
-
-    ### Extra Code I Wrote To See How Probability Evolves ### Inspired By Lab 9
-
-    # X, T = np.meshgrid( t_vals , x_vals)
-    # fig = plt.figure()
-    # ax = fig.add_subplot(111, projection='3d')
-    # ax.plot_surface(X, T, psi_matrix[:,:] * np.conj(psi_matrix[:,:]), cmap='viridis', edgecolor='none')
-    # ax.set_ylabel('x position')
-    # ax.set_xlabel('Time (s)')
-    # ax.set_zlabel('Probability Density')
-    # ax.set_title('3D Evolution of Probability Density')
-    # plt.show()
-
     return 
 
 
-ex = range(0,1000)
+ex = list(range(0,500))
+n = 500
+volts = list(range(1, n, 2))
 
-sch_plot(200,9000,1e-1,'prob',80.05,'crank',length=250)
-#sch_plot(500,9000,1e-1,'prob',800.05,'crank',length=200)
+#sch_plot(500,9000,1e-1,'psi',200,'crank',length=200)
+sch_plot(500,9000,1e-1,'psi',80,'crank',length=200)
+sch_plot(500,9000,1e-1,'prob',80,'crank',length=200)#,potential=volts)
+sch_plot(500,9000,1e-1,'prob',20,'crank',length=200)
+
+#sch_plot(500,10001,1e-2,'prob',7,method='crank',wparam=[10,0,0.5])
