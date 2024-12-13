@@ -3,6 +3,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy as sc
+import os
 
 ######################################################
 
@@ -86,7 +87,7 @@ def sch_eqn(nspace, ntime, tau, method = 'ftcs', length = 200, potential = [], w
 
     #initial row using 9.42 from textbook
     init_row = np.e**(j*k0*x_vals) * np.e**(-((x_vals-x0)**2)/(2*(sigma**2))) / (np.sqrt(sigma*np.sqrt(np.pi)))
-    init_row /= np.sqrt(prob_integral(init_row)) # Making sure initial condition is normalized
+    init_row /= prob_integral(init_row) # Making sure initial condition is normalized
 
     # Setting initial conditions and probability
     probabilities[0] = (prob_integral(init_row)) 
@@ -101,7 +102,7 @@ def sch_eqn(nspace, ntime, tau, method = 'ftcs', length = 200, potential = [], w
     H[-1,0] = -1/h**2
     # matrices for each method, from equations 9.32 (ftcs) and 9.40 (Crank Nicolson)
     ftcs_matrix = I - tau*j*H   
-    crank_matrix_1 = np.linalg.inv(I + (j*tau/2 * H))
+    crank_matrix_1 = sc.linalg.inv(I + (j*tau/2 * H))
     crank_matrix_2 = I - (j*tau/2 * H) 
 
     # Checking if solution would be stable for ftcs if selected method 
@@ -135,7 +136,7 @@ def sch_eqn(nspace, ntime, tau, method = 'ftcs', length = 200, potential = [], w
 
 # Plotting Function 
 
-def sch_plot(nspace, ntime, tau, plottype, specific_time, method = 'ftcs', length = 200, potential = [], wparam = [10,0,0.5],save='no'):
+def sch_plot(nspace, ntime, tau, plottype, specific_time, method = 'ftcs', length = 200, potential = [], wparam = [10,0,0.5],save='no',directory= os.getcwd()):
     '''Function that plots results for schrodinger equation. Please provide the following in order:
     1. nspace: int, number of spatial grid points, 
     2. ntime: int, number of time steps to be evolved, 
@@ -147,7 +148,7 @@ def sch_plot(nspace, ntime, tau, plottype, specific_time, method = 'ftcs', lengt
     7. potential: array, 1-D array giving the spatial index values at which the potential V(x) should be set to 1. Default to empty. ,
     8. wparam: list, list of parameters for initial condition [sigma0, x0, k0]. Default [10, 0, 0.5].
     9. save: string, either yes or no if you want the plot to be saved. Default is no.
-    
+    10. directory: string, path where the figure needs to be saved. Default is empty string.
     Unit assumptions h_bar = 1 and m = 1/2. 
 
     Further information can be found in the code documentation; AbdulRahman_RayhanMohammed_project4.pdf'''
@@ -182,9 +183,8 @@ def sch_plot(nspace, ntime, tau, plottype, specific_time, method = 'ftcs', lengt
         plt.plot(x_vals, real_at_t)
         plt.xlabel('x')
         plt.ylabel(f'Real part of ψ(x)')
-        plt.title(f'Plot of the real part of ψ(x) at a time t = {specific_time}')
+        plt.title(f'Plot of Real Part of ψ(x) at Time t = {specific_time} (s)')
 
-        plt.show()
 
     if plottype.lower() == 'prob':
 
@@ -194,8 +194,21 @@ def sch_plot(nspace, ntime, tau, plottype, specific_time, method = 'ftcs', lengt
         plt.plot(x_vals, prob_dens)
         plt.xlabel('x')
         plt.ylabel(f'Probability Density  ψ ψ*(x)')
-        plt.title(f'Probability Density, ψ ψ*(x) at t = {specific_time}, Area Under Curve = {np.round(area,3)}')
-        plt.show()
+        plt.title(f'Probability Density, ψ ψ*(x) at t = {specific_time} (s), Area Under Curve = {np.round(area,3)}')
+        
+
+    if save.lower() == 'yes': # Saving if desired to directory
+
+        directory = directory.replace("\\", "/") # Ensuring forward slashes for compatibility with any os
+
+        if directory != '' and not directory.endswith('/') : # Adding forward slash if user missed it
+            directory += '/'
+
+        title = directory + f'plot_of_{plottype}_at_time_{specific_time}.png'
+        plt.savefig(title)
+
+    print(directory)
+    plt.show()
 
     return 
 
@@ -205,8 +218,8 @@ n = 500
 volts = list(range(1, n, 2))
 
 #sch_plot(500,9000,1e-1,'psi',200,'crank',length=200)
-sch_plot(500,9000,1e-1,'psi',80,'crank',length=200)
-sch_plot(500,9000,1e-1,'prob',80,'crank',length=200)#,potential=volts)
-sch_plot(500,9000,1e-1,'prob',20,'crank',length=200)
+sch_plot(500,9000,1e-1,'psi',308,'crank',length=200,save='yes')
+sch_plot(500,9000,1e-1,'psi',800,'crank',length=200,potential=volts)
+sch_plot(500,9000,1e-1,'prob',800,'crank',length=200,potential=volts)
 
 #sch_plot(500,10001,1e-2,'prob',7,method='crank',wparam=[10,0,0.5])
